@@ -2,8 +2,10 @@
 
 import { useRef } from "react";
 
+import { SareeImage } from "@/types/SareeImage";
+
 interface Props {
-  onImagesSelected: (files: File[]) => void;
+  onImagesSelected: (images: SareeImage[]) => void;
 }
 
 export default function ImageUploader({ onImagesSelected }: Props) {
@@ -14,11 +16,19 @@ export default function ImageUploader({ onImagesSelected }: Props) {
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files) return;
+  if (!event.target.files) return;
 
-    onImagesSelected(Array.from(event.target.files));
-  };
+  const selectedImages: SareeImage[] = Array.from(event.target.files).map(
+    (file) => ({
+      id: crypto.randomUUID(),
+      original: file,
+      previewUrl: URL.createObjectURL(file),
+      status: "uploaded",
+    })
+  );
 
+  onImagesSelected(selectedImages);
+};
   return (
     <>
       <button

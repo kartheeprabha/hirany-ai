@@ -1,22 +1,24 @@
 "use client";
 
 import Image from "next/image";
+import { SareeImage } from "@/types/SareeImage";
 
 interface ImagePreviewProps {
-  images: File[];
+  images: SareeImage[];
+  onUpdateImage: (id: string, updates: Partial<SareeImage>) => void;
+  onGenerateCaption: (id: string) => void;
 }
 
-export default function ImagePreview({ images }: ImagePreviewProps) {
+export default function ImagePreview({
+  images,
+  onUpdateImage,
+  onGenerateCaption,
+}: ImagePreviewProps) {
   if (images.length === 0) {
     return (
       <div className="mt-8">
-        <h2 className="font-semibold text-lg">
-          Selected Images (0)
-        </h2>
-
-        <p className="text-gray-500 mt-2">
-          No images selected.
-        </p>
+        <h2 className="font-semibold text-lg">Selected Images (0)</h2>
+        <p className="text-gray-500 mt-2">No images selected.</p>
       </div>
     );
   }
@@ -30,27 +32,94 @@ export default function ImagePreview({ images }: ImagePreviewProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {images.map((image) => (
           <div
-            key={image.name}
+            key={image.id}
             className="border rounded-xl overflow-hidden shadow-sm bg-white"
           >
             <div className="relative w-full h-64">
               <Image
-                src={URL.createObjectURL(image)}
-                alt={image.name}
+                src={image.processedUrl || image.previewUrl}
+                alt={image.original.name}
                 fill
                 className="object-cover"
                 unoptimized
               />
             </div>
 
-            <div className="p-4">
-              <p className="font-medium truncate">
-                {image.name}
-              </p>
+            <div className="p-4 space-y-3">
+              <p className="font-medium truncate">{image.original.name}</p>
 
-              <p className="text-sm text-gray-500">
-                {(image.size / 1024 / 1024).toFixed(2)} MB
-              </p>
+              <div className="mt-3">
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                    image.status === "uploaded"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : image.status === "processing"
+                      ? "bg-blue-100 text-blue-800"
+                      : image.status === "completed"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {image.status.toUpperCase()}
+                </span>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Fabric (e.g. Cotton Saree)"
+                value={image.fabric || ""}
+                onChange={(e) =>
+                  onUpdateImage(image.id, { fabric: e.target.value })
+                }
+                className="w-full border rounded-lg p-2 text-sm"
+              />
+
+              <input
+                type="text"
+                placeholder="Colour (e.g. Red & Bottle Green)"
+                value={image.colour || ""}
+                onChange={(e) =>
+                  onUpdateImage(image.id, { colour: e.target.value })
+                }
+                className="w-full border rounded-lg p-2 text-sm"
+              />
+
+              <input
+                type="text"
+                placeholder="Price (e.g. 899)"
+                value={image.price || ""}
+                onChange={(e) =>
+                  onUpdateImage(image.id, { price: e.target.value })
+                }
+                className="w-full border rounded-lg p-2 text-sm"
+              />
+
+              <button
+                onClick={() => onGenerateCaption(image.id)}
+                disabled={!image.fabric || !image.colour || !image.price}
+                className="w-full bg-purple-600 text-white p-2 rounded-lg text-sm disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-purple-700 transition"
+              >
+                ✨ Generate Caption
+              </button>
+
+              {image.caption && (
+                <div className="mt-2">
+                  <textarea
+                    readOnly
+                    value={image.caption}
+                    rows={8}
+                    className="w-full border rounded-lg p-2 text-xs font-mono"
+                  />
+                  <button
+                    onClick={() =>
+                      navigator.clipboard.writeText(image.caption || "")
+                    }
+                    className="w-full mt-2 bg-gray-800 text-white p-2 rounded-lg text-sm hover:bg-gray-900 transition"
+                  >
+                    📋 Copy Caption
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}
