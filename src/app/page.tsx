@@ -8,6 +8,7 @@ import { addLogoToImage } from "@/services/imageProcessor";
 
 export default function Home() {
   const [images, setImages] = useState<SareeImage[]>([]);
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false);
 
   const handleGenerate = async () => {
     const updatedImages = [...images];
@@ -35,12 +36,7 @@ export default function Home() {
     );
   };
 
-  const handleGenerateCaption = async (id: string) => {
-    const image = images.find((img) => img.id === id);
-    if (!image) return;
-
-    handleUpdateImage(id, { caption: "Generating..." });
-
+  const generateCaptionFor = async (image: SareeImage) => {
     try {
       const res = await fetch("/api/generate-caption", {
         method: "POST",
@@ -58,12 +54,41 @@ export default function Home() {
         throw new Error(data.error || "Failed to generate caption");
       }
 
-      handleUpdateImage(id, { caption: data.caption });
+      handleUpdateImage(image.id, { caption: data.caption });
     } catch (error) {
       console.error("Caption generation failed:", error);
-      handleUpdateImage(id, { caption: "⚠️ Failed to generate caption. Try again." });
+      handleUpdateImage(image.id, {
+        caption: "⚠️ Failed to generate caption. Try again.",
+      });
     }
   };
+
+  const handleGenerateCaption = async (id: string) => {
+    const image = images.find((img) => img.id === id);
+    if (!image) return;
+
+    handleUpdateImage(id, { caption: "Generating..." });
+    await generateCaptionFor(image);
+  };
+
+  const handleGenerateAllCaptions = async () => {
+    setIsGeneratingAll(true);
+
+    const eligible = images.filter(
+      (img) => img.fabric && img.colour && img.price && !img.caption
+    );
+
+    for (const image of eligible) {
+      handleUpdateImage(image.id, { caption: "Generating..." });
+      await generateCaptionFor(image);
+    }
+
+    setIsGeneratingAll(false);
+  };
+
+  const readyForCaptionCount = images.filter(
+    (img) => img.fabric && img.colour && img.price && !img.caption
+  ).length;
 
   return (
     <main className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
@@ -92,6 +117,18 @@ export default function Home() {
         >
           Generate Content
         </button>
+
+        {images.length > 0 && (
+          <button
+            onClick={handleGenerateAllCaptions}
+            disabled={isGeneratingAll || readyForCaptionCount === 0}
+            className="w-full mt-3 bg-purple-600 text-white p-4 rounded-xl hover:bg-purple-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            {isGeneratingAll
+              ? "Generating captions..."
+              : `✨ Generate All Captions (${readyForCaptionCount})`}
+          </button>
+        )}
       </div>
     </main>
   );
