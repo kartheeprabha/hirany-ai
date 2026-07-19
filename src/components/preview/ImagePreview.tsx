@@ -16,13 +16,32 @@ export default function ImagePreview({
   onGenerateCaption,
   onGenerateBackground,
 }: ImagePreviewProps) {
-  const handleDownload = (image: SareeImage) => {
+  const handleDownload = async (image: SareeImage) => {
+    const dataUrl = image.backgroundUrl || image.processedUrl || image.previewUrl;
+
+    try {
+      // Convert the data URL into a real File object for sharing
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], `hiranyai-${image.original.name}`, {
+        type: blob.type,
+      });
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        // iOS PWA / mobile: opens native share sheet with "Save Image" option
+        await navigator.share({ files: [file] });
+        return;
+      }
+    } catch (error) {
+      console.error("Share failed, falling back to download link:", error);
+    }
+
+    // Fallback for desktop browsers where download links still work fine
     const link = document.createElement("a");
-    link.href = image.backgroundUrl || image.processedUrl || image.previewUrl;
+    link.href = dataUrl;
     link.download = `hiranyai-${image.original.name}`;
     link.click();
   };
-
   if (images.length === 0) {
     return (
       <div className="mt-8">
