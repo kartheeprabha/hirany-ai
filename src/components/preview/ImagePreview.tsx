@@ -7,16 +7,18 @@ interface ImagePreviewProps {
   images: SareeImage[];
   onUpdateImage: (id: string, updates: Partial<SareeImage>) => void;
   onGenerateCaption: (id: string) => void;
+  onGenerateBackground: (id: string) => void;
 }
 
 export default function ImagePreview({
   images,
   onUpdateImage,
   onGenerateCaption,
+  onGenerateBackground,
 }: ImagePreviewProps) {
   const handleDownload = (image: SareeImage) => {
     const link = document.createElement("a");
-    link.href = image.processedUrl || image.previewUrl;
+    link.href = image.backgroundUrl || image.processedUrl || image.previewUrl;
     link.download = `hiranyai-${image.original.name}`;
     link.click();
   };
@@ -44,7 +46,7 @@ export default function ImagePreview({
           >
             <div className="relative w-full h-64">
               <Image
-                src={image.processedUrl || image.previewUrl}
+                src={image.backgroundUrl || image.processedUrl || image.previewUrl}
                 alt={image.original.name}
                 fill
                 className="object-cover"
@@ -54,10 +56,18 @@ export default function ImagePreview({
 
             <button
               onClick={() => handleDownload(image)}
-              disabled={!image.processedUrl}
+              disabled={!image.processedUrl && !image.backgroundUrl}
               className="w-full bg-green-600 text-white p-2 text-sm hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               ⬇️ Download Image
+            </button>
+
+            <button
+              onClick={() => onGenerateBackground(image.id)}
+              disabled={image.status === "processing"}
+              className="w-full bg-amber-600 text-white p-2 text-sm hover:bg-amber-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              🎨 Generate Styled Background
             </button>
 
             <div className="p-4 space-y-3">

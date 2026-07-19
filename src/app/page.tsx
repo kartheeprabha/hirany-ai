@@ -4,7 +4,16 @@ import { useState } from "react";
 import ImageUploader from "@/components/upload/ImageUploader";
 import ImagePreview from "@/components/preview/ImagePreview";
 import { SareeImage } from "@/types/SareeImage";
-import { addLogoToImage } from "@/services/imageProcessor";
+import { addLogoToImage, addLogoToImageSrc } from "@/services/imageProcessor";
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject("Failed to read file");
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function Home() {
   const [images, setImages] = useState<SareeImage[]>([]);
@@ -86,6 +95,39 @@ export default function Home() {
     setIsGeneratingAll(false);
   };
 
+  const handleGenerateBackground = async (id: string) => {
+    const image = images.find((img) => img.id === id);
+    if (!image) return;
+
+    handleUpdateImage(id, { status: "processing" });
+
+    try {
+      const dataUrl = await fileToDataUrl(image.original);
+      
+      const res = await fetch("/api/generate-background", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUrl: dataUrl }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to generate background");
+      }
+
+      const withLogo = await addLogoToImageSrc(data.imageDataUrl);
+
+      handleUpdateImage(id, {
+        backgroundUrl: withLogo,
+        status: "completed",
+      });
+    } catch (error) {
+      console.error("Background generation failed:", error);
+      handleUpdateImage(id, { status: "failed" });
+    }
+  };
+
   const readyForCaptionCount = images.filter(
     (img) => img.fabric && img.colour && img.price && !img.caption
   ).length;
@@ -109,6 +151,7 @@ export default function Home() {
           images={images}
           onUpdateImage={handleUpdateImage}
           onGenerateCaption={handleGenerateCaption}
+          onGenerateBackground={handleGenerateBackground}
         />
 
         <button

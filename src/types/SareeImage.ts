@@ -4,6 +4,7 @@ export interface SareeImage {
   previewUrl: string;
 
   processedUrl?: string;
+  backgroundUrl?: string;
 
   fabric?: string;
   colour?: string;
@@ -11,9 +12,5 @@ export interface SareeImage {
 
   caption?: string;
 
-  status:
-    | "uploaded"
-    | "processing"
-    | "completed"
-    | "failed";
+  status: "uploaded" | "processing" | "completed" | "failed";
 }

@@ -1,6 +1,4 @@
-export async function addLogoToImage(
-  imageFile: File
-): Promise<string> {
+async function addLogoToSrc(imageSrc: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -39,20 +37,28 @@ export async function addLogoToImage(
       resolve(canvas.toDataURL("image/png"));
     };
 
-    // Attach handlers BEFORE setting src, so cached images don't fire early
     image.onload = () => {
       imageLoaded = true;
       tryDraw();
     };
-    image.onerror = () => reject("Failed to load the uploaded image");
+    image.onerror = () => reject("Failed to load the image");
 
     logo.onload = () => {
       logoLoaded = true;
       tryDraw();
     };
-    logo.onerror = () => reject("Failed to load /logo.png — check the file exists in public/");
+    logo.onerror = () =>
+      reject("Failed to load /logo.png — check the file exists in public/");
 
-    image.src = URL.createObjectURL(imageFile);
+    image.src = imageSrc;
     logo.src = "/logo.png";
   });
+}
+
+export async function addLogoToImage(imageFile: File): Promise<string> {
+  return addLogoToSrc(URL.createObjectURL(imageFile));
+}
+
+export async function addLogoToImageSrc(imageSrc: string): Promise<string> {
+  return addLogoToSrc(imageSrc);
 }
