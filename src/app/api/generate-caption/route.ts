@@ -48,7 +48,7 @@ Price: ₹${price}/-
 Keep the same emojis, section structure, and warm traditional tone. Vary the opening line and description naturally each time. Include relevant hashtags at the end.`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 40000);
 
     const response = await fetch(
       `${GEMINI_URL}?key=${process.env.GEMINI_API_KEY}`,
