@@ -14,6 +14,13 @@ export default function ImagePreview({
   onUpdateImage,
   onGenerateCaption,
 }: ImagePreviewProps) {
+  const handleDownload = (image: SareeImage) => {
+    const link = document.createElement("a");
+    link.href = image.processedUrl || image.previewUrl;
+    link.download = `hiranyai-${image.original.name}`;
+    link.click();
+  };
+
   if (images.length === 0) {
     return (
       <div className="mt-8">
@@ -44,6 +51,14 @@ export default function ImagePreview({
                 unoptimized
               />
             </div>
+
+            <button
+              onClick={() => handleDownload(image)}
+              disabled={!image.processedUrl}
+              className="w-full bg-green-600 text-white p-2 text-sm hover:bg-green-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              ⬇️ Download Image
+            </button>
 
             <div className="p-4 space-y-3">
               <p className="font-medium truncate">{image.original.name}</p>
