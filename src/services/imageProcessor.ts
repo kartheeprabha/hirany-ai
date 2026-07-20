@@ -25,7 +25,7 @@ async function addLogoToSrc(imageSrc: string): Promise<string> {
       const logoWidth = image.width * 0.25;
       const logoHeight = (logo.height / logo.width) * logoWidth;
       const margin = image.width * 0.03;
-
+      ctx.globalAlpha = 1;
       ctx.drawImage(
         logo,
         image.width - logoWidth - margin,
