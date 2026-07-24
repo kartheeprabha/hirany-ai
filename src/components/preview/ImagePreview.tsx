@@ -8,6 +8,7 @@ interface ImagePreviewProps {
   onUpdateImage: (id: string, updates: Partial<SareeImage>) => void;
   onGenerateCaption: (id: string) => void;
   onGenerateBackground: (id: string) => void;
+  onCompositeBackdrop: (id: string) => void;
 }
 
 export default function ImagePreview({
@@ -15,12 +16,12 @@ export default function ImagePreview({
   onUpdateImage,
   onGenerateCaption,
   onGenerateBackground,
+  onCompositeBackdrop,
 }: ImagePreviewProps) {
   const handleDownload = async (image: SareeImage) => {
     const dataUrl = image.backgroundUrl || image.processedUrl || image.previewUrl;
 
     try {
-      // Convert the data URL into a real File object for sharing
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const file = new File([blob], `hiranyai-${image.original.name}`, {
@@ -28,7 +29,6 @@ export default function ImagePreview({
       });
 
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        // iOS PWA / mobile: opens native share sheet with "Save Image" option
         await navigator.share({ files: [file] });
         return;
       }
@@ -36,12 +36,12 @@ export default function ImagePreview({
       console.error("Share failed, falling back to download link:", error);
     }
 
-    // Fallback for desktop browsers where download links still work fine
     const link = document.createElement("a");
     link.href = dataUrl;
     link.download = `hiranyai-${image.original.name}`;
     link.click();
   };
+
   if (images.length === 0) {
     return (
       <div className="mt-8">
@@ -87,6 +87,14 @@ export default function ImagePreview({
               className="w-full bg-amber-600 text-white p-2 text-sm hover:bg-amber-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               🎨 Generate Styled Background
+            </button>
+
+            <button
+              onClick={() => onCompositeBackdrop(image.id)}
+              disabled={image.status === "processing"}
+              className="w-full bg-teal-600 text-white p-2 text-sm hover:bg-teal-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              🖼️ Apply Backdrop (Free)
             </button>
 
             <div className="p-4 space-y-3">

@@ -4,7 +4,7 @@ import { useState } from "react";
 import ImageUploader from "@/components/upload/ImageUploader";
 import ImagePreview from "@/components/preview/ImagePreview";
 import { SareeImage } from "@/types/SareeImage";
-import { addLogoToImage, addLogoToImageSrc } from "@/services/imageProcessor";
+import { addLogoToImage, addLogoToImageSrc, compositeOnBackdrop } from "@/services/imageProcessor";
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -103,7 +103,7 @@ export default function Home() {
 
     try {
       const dataUrl = await fileToDataUrl(image.original);
-      
+
       const res = await fetch("/api/generate-background", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,6 +124,24 @@ export default function Home() {
       });
     } catch (error) {
       console.error("Background generation failed:", error);
+      handleUpdateImage(id, { status: "failed" });
+    }
+  };
+
+  const handleCompositeBackdrop = async (id: string) => {
+    const image = images.find((img) => img.id === id);
+    if (!image) return;
+
+    handleUpdateImage(id, { status: "processing" });
+
+    try {
+      const composited = await compositeOnBackdrop(image.original);
+      handleUpdateImage(id, {
+        backgroundUrl: composited,
+        status: "completed",
+      });
+    } catch (error) {
+      console.error("Backdrop compositing failed:", error);
       handleUpdateImage(id, { status: "failed" });
     }
   };
@@ -152,6 +170,7 @@ export default function Home() {
           onUpdateImage={handleUpdateImage}
           onGenerateCaption={handleGenerateCaption}
           onGenerateBackground={handleGenerateBackground}
+          onCompositeBackdrop={handleCompositeBackdrop}
         />
 
         <button
